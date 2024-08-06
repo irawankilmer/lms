@@ -1,41 +1,75 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
+
 const prisma = new PrismaClient();
 
 async function main() {
-  const hashedAdminPassword = await bcrypt.hash('securepassword123', 10);
-  const hashedTeacherPassword = await bcrypt.hash('securepassword123', 10);
-  const hashedStudentPassword = await bcrypt.hash('securepassword123', 10);
+  const passwordHash = await bcrypt.hash('password123', 10);
 
-  await prisma.user.create({
-    data: {
-      email: 'admin@example.com',
-      password: hashedAdminPassword,
-      role: 'ADMIN',
-    },
+  await prisma.user.createMany({
+    data: [
+      {
+        username: 'adminuser',
+        email: 'admin@example.com',
+        password: passwordHash,
+      },
+      {
+        username: 'teacheruser',
+        email: 'teacher@example.com',
+        password: passwordHash,
+      },
+      {
+        username: 'studentuser',
+        email: 'student@example.com',
+        password: passwordHash,
+      },
+    ],
   });
 
-  await prisma.user.create({
-    data: {
-      email: 'teacher@example.com',
-      password: hashedTeacherPassword,
-      role: 'TEACHER',
-    },
+  const roles = await prisma.role.createMany({
+    data: [
+      { name: 'admin' },
+      { name: 'teacher' },
+      { name: 'student' },
+    ],
   });
 
-  await prisma.user.create({
-    data: {
-      email: 'student@example.com',
-      password: hashedStudentPassword,
-      role: 'STUDENT',
-    },
+  const admin = await prisma.user.findUnique({
+    where: { email: 'admin@example.com' },
   });
+
+  const teacher = await prisma.user.findUnique({
+    where: { email: 'teacher@example.com' },
+  });
+
+  const student = await prisma.user.findUnique({
+    where: { email: 'student@example.com' },
+  });
+
+  const adminRole = await prisma.role.findUnique({
+    where: { name: 'admin' },
+  });
+
+  const teacherRole = await prisma.role.findUnique({
+    where: { name: 'teacher' },
+  });
+
+  const studentRole = await prisma.role.findUnique({
+    where: { name: 'student' },
+  });
+
+  await prisma.userRole.createMany({
+    data: [
+      { userId: admin.id, roleId: adminRole.id },
+      { userId: teacher.id, roleId: teacherRole.id },
+      { userId: student.id, roleId: studentRole.id },
+    ],
+  });
+
+  console.log('Seed data created successfully');
 }
 
 main()
-  .then(() => {
-    console.log('Seeding finished.');
-  })
   .catch((e) => {
     console.error(e);
     process.exit(1);
