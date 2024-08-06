@@ -28,7 +28,7 @@ const Login = () => {
               if (res.error) {
                 console.error(res.error);
               } else {
-                router.push("/");
+                router.push("/dashboard"); // Ganti "/dashboard" dengan halaman tujuan Anda
               }
               setSubmitting(false);
             } catch (error) {
